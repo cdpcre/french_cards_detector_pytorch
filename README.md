@@ -1,0 +1,2 @@
+# french_cards_detector_pytorch
+french_cards_detector_pytorch
