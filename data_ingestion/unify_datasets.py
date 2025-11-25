@@ -63,7 +63,7 @@ def process_hugopaigneau():
     csv_path = HUGO_DIR / "train_cards_label.csv"
     if not csv_path.exists():
         print(f"Warning: {csv_path} not found. Skipping.")
-        return
+        return []
 
     df = pd.read_csv(csv_path)
     # Group by filename to handle multiple objects per image
@@ -179,24 +179,16 @@ def process_vdntdesai11():
         with zipfile.ZipFile(VDNT_ZIP, 'r') as zip_ref:
             zip_ref.extractall(VDNT_DIR)
             
-    # Inspect for classes.txt or similar
-    # Based on previous `unzip -l`, structure is train/images and train/labels
-    # We need to find the class mapping. Often it's in a classes.txt or we might have to guess/check.
-    # Let's look for classes.txt
-    classes_file = list(VDNT_DIR.rglob("classes.txt"))
-    if not classes_file:
-        # Fallback: Check data.yaml
-        data_file = list(VDNT_DIR.rglob("data.yaml"))
-        if data_file:
-            with open(data_file[0], 'r') as f:
-                data_config = yaml.safe_load(f)
-                names = data_config.get('names', [])
-        else:
-            print("Warning: Could not find class mapping for vdntdesai11. Skipping.")
-            return []
-    else:
-        with open(classes_file[0], 'r') as f:
-            names = [line.strip() for line in f.readlines()]
+    # Hardcoded class list for vdntdesai11 based on inspection (K before Q)
+    # Order: Suits (C, D, H, S), Ranks (A, 2..10, J, K, Q)
+    ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'K', 'Q']
+    suits = ['c', 'd', 'h', 's']
+    names = []
+    for s in suits:
+        for r in ranks:
+            names.append(f"{r}{s}")
+            
+    print("Using hardcoded class mapping for vdntdesai11 (K before Q swap).")
 
     # Map IDs
     id_map = {}

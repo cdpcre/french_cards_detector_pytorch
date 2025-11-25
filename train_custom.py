@@ -276,6 +276,14 @@ def train(args):
             
             preds = model(imgs)
             
+            batch_data = {
+                "batch_idx": targets[:, 0],
+                "cls": targets[:, 1].view(-1, 1),
+                "bboxes": targets[:, 2:],
+                "device": device,
+                "img": imgs
+            }
+            
             loss, loss_items = loss_fn(preds, batch_data)
             
             # Ensure loss is scalar
@@ -313,6 +321,8 @@ def train(args):
         
         # Save checkpoint
         torch.save(model.state_dict(), f"{args.project}/custom_yolo_epoch_{epoch+1}.pt")
+        
+    return val_loss / len(val_loader)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train YOLOv11 with custom PyTorch loop')

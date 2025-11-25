@@ -3,7 +3,7 @@ train: images/train
 val: images/val
 test: images/test
 
-nc: 52
+nc: 53
 names:
   [
     "10c",
@@ -58,4 +58,5 @@ names:
     "Qd",
     "Qh",
     "Qs",
+    "joker",
   ]
