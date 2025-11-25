@@ -9,9 +9,13 @@ Potential applications include:
 - **Augmented Reality**: Enhancing physical card games with digital overlays.
 
 ## Dataset
-We utilize the **Playing Cards Object Detection Dataset**.
-- **Source**: [Kaggle - Playing Cards Object Detection Dataset (andy8744)](https://www.kaggle.com/datasets/andy8744/playing-cards-object-detection-dataset)
-- **Classes**: 52 standard cards (Ace through King, across Spades, Hearts, Diamonds, and Clubs).
+We utilize a unified dataset composed of multiple sources:
+- **Andy8744**: [Playing Cards Object Detection Dataset](https://www.kaggle.com/datasets/andy8744/playing-cards-object-detection-dataset)
+- **HugoPaigneau**: [Playing Cards Dataset](https://www.kaggle.com/datasets/hugopaigneau/playing-cards-dataset)
+- **JayPradipShah**: [The Complete Playing Card Dataset](https://www.kaggle.com/datasets/jaypradipshah/the-complete-playing-card-dataset)
+- **Playing cards.v10i.yolov11**: A dataset using Dutch nomenclature (mapped to standard French).
+
+- **Classes**: 52 standard cards (Ace through King, across Spades, Hearts, Diamonds, and Clubs) + Joker.
 - **Format**: The dataset is in YOLO format (images and corresponding `.txt` label files).
 
 ## Project Structure

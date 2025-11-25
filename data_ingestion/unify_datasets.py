@@ -16,6 +16,7 @@ ANDY_DIR = DATASETS_DIR / "andy8744:playing-cards-object-detection-dataset"
 VDNT_ZIP = DATASETS_DIR / "vdntdesai11:playing-cards.zip"
 VDNT_DIR = DATASETS_DIR / "vdntdesai11_extracted"
 JAY_DIR = DATASETS_DIR / "jaypradipshah:the-complete-playing-card-dataset"
+V10I_DIR = DATASETS_DIR / "Playing cards.v10i.yolov11"
 
 # Canonical Class List (Alphabetical order as seen in Andy8744)
 CANONICAL_CLASSES = [
@@ -166,87 +167,93 @@ def process_andy8744():
             
     return data_items
 
-def process_vdntdesai11():
-    """Process vdntdesai11 dataset (Unzip and Map)."""
-    print("Processing vdntdesai11 dataset...")
-    
-    if not VDNT_ZIP.exists():
-        print("vdntdesai11 zip not found.")
-        return []
-        
-    if not VDNT_DIR.exists():
-        print("Unzipping vdntdesai11...")
-        with zipfile.ZipFile(VDNT_ZIP, 'r') as zip_ref:
-            zip_ref.extractall(VDNT_DIR)
-            
-    # Hardcoded class list for vdntdesai11 based on inspection (K before Q)
-    # Order: Suits (C, D, H, S), Ranks (A, 2..10, J, K, Q)
-    ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'K', 'Q']
-    suits = ['c', 'd', 'h', 's']
-    names = []
-    for s in suits:
-        for r in ranks:
-            names.append(f"{r}{s}")
-            
-    print("Using hardcoded class mapping for vdntdesai11 (K before Q swap).")
-
-    # Map IDs
-    id_map = {}
-    for i, name in enumerate(names):
-        # Normalize name (e.g., '10H' -> '10h')
-        # Check if name is in CANONICAL_CLASSES
-        # Try exact match first
-        if name in CLASS_TO_ID:
-            id_map[i] = CLASS_TO_ID[name]
-        else:
-            # Try lowercase
-            if name.lower() in CLASS_TO_ID:
-                id_map[i] = CLASS_TO_ID[name.lower()]
-            else:
-                print(f"Warning: Class '{name}' not found in canonical classes.")
-            
-    data_items = []
-    # Assume standard YOLO structure inside extracted folder
-    # We'll search recursively for images
-    for img_path in VDNT_DIR.rglob("*.jpg"):
-        # Find corresponding label
-        # Assuming label is in a 'labels' folder parallel to 'images' or same folder
-        # Strategy: look for .txt with same stem
-        
-        # Check if it's in an 'images' folder
-        if 'images' in img_path.parts:
-            # Try replacing 'images' with 'labels'
-            parts = list(img_path.parts)
-            idx = parts.index('images')
-            parts[idx] = 'labels'
-            lbl_path = Path(*parts).with_suffix('.txt')
-        else:
-            lbl_path = img_path.with_suffix('.txt')
-            
-        if not lbl_path.exists():
-            continue
-            
-        with open(lbl_path, 'r') as f:
-            lines = f.readlines()
-            
-        new_lines = []
-        for line in lines:
-            parts = line.strip().split()
-            if not parts: continue
-            cls_id = int(parts[0])
-            
-            if cls_id in id_map:
-                new_cls_id = id_map[cls_id]
-                new_lines.append(f"{new_cls_id} " + " ".join(parts[1:]))
-        
-        if new_lines:
-            data_items.append({
-                'src_img': img_path,
-                'labels': new_lines,
-                'dataset': 'vdntdesai11'
-            })
-
-    return data_items
+# def process_vdntdesai11():
+#     """Process vdntdesai11 dataset (Unzip and Map)."""
+#     print("Processing vdntdesai11 dataset...")
+#     
+#     if not VDNT_ZIP.exists():
+#         print("vdntdesai11 zip not found.")
+#         return []
+#         
+#     if not VDNT_DIR.exists():
+#         print("Unzipping vdntdesai11...")
+#         with zipfile.ZipFile(VDNT_ZIP, 'r') as zip_ref:
+#             zip_ref.extractall(VDNT_DIR)
+#     
+#     # User-provided class list for vdntdesai11
+#     # class names dictionary
+#     ref_class_names = [
+#         'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'CA', 'CJ', 'CK', 'CQ', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10', 'DA', 'DJ', 'DK', 'DQ', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'H10', 'HA', 'HJ', 'HK', 'HQ', 'SA', 'S2', 'S3', 'S4', 'S5', 
+#                'S6', 'S7', 'S8', 'S9', 'S10', 'SJ', 'SK', 'SQ']
+#     
+#     # Note: 'background' at index 0, and specific ordering (e.g. K before Q usually, Spades different)
+#     vdnt_classes = [
+#         'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'CA', 'CJ', 'CK', 'CQ', 
+#         'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10', 'DA', 'DJ', 'DK', 'DQ', 
+#         'H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'H10', 'HA', 'HJ', 'HK', 'HQ', 
+#         'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'SA', 'SJ', 'SK', 'SQ'
+#     ]
+#             
+#     print("Using user-provided class list for vdntdesai11.")
+# 
+#     # Map IDs
+#     id_map = {}
+#     for i, name in enumerate(vdnt_classes):
+#             
+#         # Format is [Suit][Rank] (e.g., C2, H10, SA)
+#         suit_char = name[0]
+#         rank_str = name[1:]
+#         
+#         # Canonical format is [Rank][Suit_lower] (e.g., 2c, 10h, As)
+#         canonical_name = f"{rank_str}{suit_char.lower()}"
+#         
+#         if canonical_name in CLASS_TO_ID:
+#             id_map[i] = CLASS_TO_ID[canonical_name]
+#         else:
+#             print(f"Warning: Class '{name}' (canonical: '{canonical_name}') not found in canonical classes.")
+#             
+#     data_items = []
+#     # Assume standard YOLO structure inside extracted folder
+#     # We'll search recursively for images
+#     for img_path in VDNT_DIR.rglob("*.jpg"):
+#         # Find corresponding label
+#         # Assuming label is in a 'labels' folder parallel to 'images' or same folder
+#         # Strategy: look for .txt with same stem
+#         
+#         # Check if it's in an 'images' folder
+#         if 'images' in img_path.parts:
+#             # Try replacing 'images' with 'labels'
+#             parts = list(img_path.parts)
+#             idx = parts.index('images')
+#             parts[idx] = 'labels'
+#             lbl_path = Path(*parts).with_suffix('.txt')
+#         else:
+#             lbl_path = img_path.with_suffix('.txt')
+#             
+#         if not lbl_path.exists():
+#             continue
+#             
+#         with open(lbl_path, 'r') as f:
+#             lines = f.readlines()
+#             
+#         new_lines = []
+#         for line in lines:
+#             parts = line.strip().split()
+#             if not parts: continue
+#             cls_id = int(parts[0])
+#             
+#             if cls_id in id_map:
+#                 new_cls_id = id_map[cls_id]
+#                 new_lines.append(f"{new_cls_id} " + " ".join(parts[1:]))
+#         
+#         if new_lines:
+#             data_items.append({
+#                 'src_img': img_path,
+#                 'labels': new_lines,
+#                 'dataset': 'vdntdesai11'
+#             })
+# 
+#     return data_items
 
 
 def process_jaypradipshah():
@@ -331,14 +338,116 @@ def process_jaypradipshah():
             
     return data_items
 
+def process_playing_cards_v10i():
+    """Process Playing cards.v10i.yolov11 dataset (Dutch nomenclature)."""
+    print("Processing Playing cards.v10i.yolov11 dataset...")
+    
+    if not V10I_DIR.exists():
+        print("Playing cards.v10i.yolov11 directory not found.")
+        return []
+
+    # Mapping based on README
+    # Suits: s->s (Spades), k->c (Clubs), h->h (Hearts), r->d (Diamonds)
+    # Ranks: b->J, v->Q, h->K
+    
+    suit_map = {'s': 's', 'k': 'c', 'h': 'h', 'r': 'd'}
+    rank_map = {'b': 'J', 'v': 'Q', 'h': 'K'}
+    
+    # We need to read the data.yaml to get the class names list as defined in the dataset
+    yaml_path = V10I_DIR / "data.yaml"
+    if not yaml_path.exists():
+        print("Warning: V10I data.yaml not found.")
+        return []
+        
+    with open(yaml_path, 'r') as f:
+        data_config = yaml.safe_load(f)
+        
+    v10i_names = data_config['names']
+    
+    # Create ID map
+    id_map = {}
+    for i, name in enumerate(v10i_names):
+        if name in ['pile-face-down', 'pile-face-up']:
+            continue
+            
+        if name == 'j':
+            canonical_name = 'joker'
+        else:
+            # Format is [Suit][Rank] e.g. h10, k2, sa, hb
+            # Wait, looking at names: 'h10', 'h2', ... 'hb', 'hh', 'hv'
+            # So it is [Suit][Rank]
+            suit_char = name[0]
+            rank_char = name[1:]
+            
+            canonical_suit = suit_map.get(suit_char)
+            canonical_rank = rank_map.get(rank_char, rank_char).upper() # Ensure rank is upper (a->A)
+            
+            if not canonical_suit:
+                print(f"Warning: Unknown suit char '{suit_char}' in '{name}'")
+                continue
+                
+            canonical_name = f"{canonical_rank}{canonical_suit}"
+            
+        if canonical_name in CLASS_TO_ID:
+            id_map[i] = CLASS_TO_ID[canonical_name]
+        else:
+            print(f"Warning: Class '{name}' (canonical: '{canonical_name}') not found in canonical classes.")
+
+    data_items = []
+    
+    # Iterate over train, valid, test folders
+    # Structure: train/images, train/labels (parallel folders usually, or ../labels)
+    # The yaml says: train: ../train/images
+    
+    for split in ['train', 'valid', 'test']:
+        # The folder names in the directory are 'train', 'valid', 'test'
+        # Inside them, there are 'images' and 'labels' folders usually?
+        # Let's assume standard structure based on yaml relative paths
+        
+        split_dir = V10I_DIR / split
+        img_dir = split_dir / "images"
+        lbl_dir = split_dir / "labels"
+        
+        if not img_dir.exists():
+            continue
+            
+        for img_path in img_dir.glob("*.jpg"):
+            lbl_path = lbl_dir / (img_path.stem + ".txt")
+            
+            if not lbl_path.exists():
+                continue
+                
+            with open(lbl_path, 'r') as f:
+                lines = f.readlines()
+                
+            new_lines = []
+            for line in lines:
+                parts = line.strip().split()
+                if not parts: continue
+                cls_id = int(parts[0])
+                
+                if cls_id in id_map:
+                    new_cls_id = id_map[cls_id]
+                    new_lines.append(f"{new_cls_id} " + " ".join(parts[1:]))
+            
+            if new_lines:
+                data_items.append({
+                    'src_img': img_path,
+                    'labels': new_lines,
+                    'dataset': 'playing_cards_v10i'
+                })
+                
+    return data_items
+
 def main():
     setup_directories()
     
     all_data = []
     all_data.extend(process_hugopaigneau())
     all_data.extend(process_andy8744())
-    all_data.extend(process_vdntdesai11())
+    # all_data.extend(process_vdntdesai11()) # Removed due to poor quality
     all_data.extend(process_jaypradipshah())
+    all_data.extend(process_playing_cards_v10i())
     
     print(f"Total images found: {len(all_data)}")
     
