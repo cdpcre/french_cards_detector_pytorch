@@ -23,7 +23,8 @@ def train(args):
         exist_ok=True, # Overwrite existing run if name is same
         pretrained=True,
         resume=args.resume,
-        freeze=args.freeze
+        freeze=args.freeze,
+        multi_scale=args.multi_scale
     )
     print("Training completed.")
 
@@ -35,22 +36,23 @@ def train(args):
     # Export the model
     if args.export:
         print("Exporting model...")
-        success = model.export(format=args.export)
+        success = model.export(format=args.export, device=args.device)
         print(f"Export success: {success}")
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Train/Finetune YOLOv8 model locally')
+    parser = argparse.ArgumentParser(description='Train/Finetune YOLOv11 model locally')
     
     # Model and Data
-    parser.add_argument('--model', type=str, default='yolov8n.pt', help='Path to model weights (default: yolov8n.pt)')
+    parser.add_argument('--model', type=str, default='yolo11n.pt', help='Path to model weights (default: yolo11n.pt)')
     parser.add_argument('--data', type=str, default='data.yaml', help='Path to data config (default: data.yaml)')
     
     # Training Hyperparameters
     parser.add_argument('--epochs', type=int, default=50, help='Number of epochs')
-    parser.add_argument('--batch', type=int, default=16, help='Batch size (default: 16, use -1 for auto)')
+    parser.add_argument('--batch', type=int, default=64, help='Batch size (default: 16, use -1 for auto)')
     parser.add_argument('--imgsz', type=int, default=640, help='Image size')
-    parser.add_argument('--device', type=str, default='', help='Device to run on, i.e. 0, 0,1,2,3 or cpu')
+    parser.add_argument('--device', type=str, default='mps', help='Device to run on, i.e. 0, 0,1,2,3 or cpu')
     parser.add_argument('--freeze', type=int, default=None, help='Number of layers to freeze')
+    parser.add_argument('--multi_scale', type=bool, default=True, help='Use multi scale training')    
     
     # Run Configuration
     parser.add_argument('--project', type=str, default='runs/train', help='Directory to save results')
@@ -58,7 +60,7 @@ if __name__ == '__main__':
     parser.add_argument('--resume', action='store_true', help='Resume training from last checkpoint')
     
     # Export
-    parser.add_argument('--export', type=str, default=None, help='Export format (e.g., onnx, torchscript) after training')
+    parser.add_argument('--export', type=str, default="onnx", help='Export format (e.g., onnx, torchscript) after training')
 
     args = parser.parse_args()
     
