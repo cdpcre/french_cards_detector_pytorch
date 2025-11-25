@@ -10,9 +10,9 @@ Potential applications include:
 
 ## Dataset
 We utilize the **Playing Cards Object Detection Dataset**.
-- **Source**: [Kaggle - Playing Cards Object Detection Dataset](https://www.kaggle.com/datasets/issaisasank/playing-cards-object-detection-dataset)
+- **Source**: [Kaggle - Playing Cards Object Detection Dataset (andy8744)](https://www.kaggle.com/datasets/andy8744/playing-cards-object-detection-dataset)
 - **Classes**: 52 standard cards (Ace through King, across Spades, Hearts, Diamonds, and Clubs).
-- **Format**: The dataset must be in YOLO format (images and corresponding `.txt` label files).
+- **Format**: The dataset is in YOLO format (images and corresponding `.txt` label files).
 
 ## Project Structure
 - `notebook.ipynb`: Jupyter notebook for Exploratory Data Analysis (EDA) and initial model training experiments.
