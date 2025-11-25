@@ -48,7 +48,7 @@ if __name__ == '__main__':
     
     # Training Hyperparameters
     parser.add_argument('--epochs', type=int, default=50, help='Number of epochs')
-    parser.add_argument('--batch', type=int, default=64, help='Batch size (default: 16, use -1 for auto)')
+    parser.add_argument('--batch', type=int, default=-1, help='Batch size (default: 16, use -1 for auto)')
     parser.add_argument('--imgsz', type=int, default=640, help='Image size')
     parser.add_argument('--device', type=str, default='mps', help='Device to run on, i.e. 0, 0,1,2,3 or cpu')
     parser.add_argument('--freeze', type=int, default=None, help='Number of layers to freeze')
