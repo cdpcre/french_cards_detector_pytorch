@@ -15,6 +15,7 @@ HUGO_DIR = DATASETS_DIR / "hugopaigneau:playing-cards-dataset"
 ANDY_DIR = DATASETS_DIR / "andy8744:playing-cards-object-detection-dataset"
 VDNT_ZIP = DATASETS_DIR / "vdntdesai11:playing-cards.zip"
 VDNT_DIR = DATASETS_DIR / "vdntdesai11_extracted"
+JAY_DIR = DATASETS_DIR / "jaypradipshah:the-complete-playing-card-dataset"
 
 # Canonical Class List (Alphabetical order as seen in Andy8744)
 CANONICAL_CLASSES = [
@@ -30,7 +31,8 @@ CANONICAL_CLASSES = [
     'Ac', 'Ad', 'Ah', 'As', 
     'Jc', 'Jd', 'Jh', 'Js', 
     'Kc', 'Kd', 'Kh', 'Ks', 
-    'Qc', 'Qd', 'Qh', 'Qs'
+    'Qc', 'Qd', 'Qh', 'Qs',
+    'joker'
 ]
 
 CLASS_TO_ID = {name: i for i, name in enumerate(CANONICAL_CLASSES)}
@@ -254,6 +256,89 @@ def process_vdntdesai11():
 
     return data_items
 
+
+def process_jaypradipshah():
+    """Process jaypradipshah dataset (YOLO format with specific mapping)."""
+    print("Processing jaypradipshah dataset...")
+    
+    # Paths
+    img_dir = JAY_DIR / "Images" / "Images"
+    lbl_dir = JAY_DIR / "YOLO_Annotations" / "YOLO_Annotations"
+    
+    if not img_dir.exists() or not lbl_dir.exists():
+        print("Warning: jaypradipshah directories not found. Skipping.")
+        return []
+
+    # Class mapping based on annotation.json inspection
+    # The dataset uses a specific order. We map it to our CANONICAL_CLASSES.
+    # The dataset classes are: AS, AC, AD, AH, 2S, 2C, ... JOKER
+    # We need to map these to our canonical names (e.g., AS -> As, 2S -> 2s, JOKER -> joker)
+    
+    ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
+    suits = ['S', 'C', 'D', 'H']
+    
+    jay_classes = []
+    for r in ranks:
+        for s in suits:
+            jay_classes.append(f"{r}{s}")
+    jay_classes.append("JOKER")
+    
+    # Map from Jay's index (0-based) to Canonical ID
+    jay_id_map = {}
+    for i, name in enumerate(jay_classes):
+        canonical_name = name
+        
+        # Handle JOKER
+        if name == 'JOKER':
+            canonical_name = 'joker'
+        else:
+            # Handle standard cards: Rank + Suit_lower
+            # e.g., AS -> As, 10H -> 10h
+            rank = name[:-1]
+            suit = name[-1]
+            canonical_name = f"{rank}{suit.lower()}"
+            
+        if canonical_name in CLASS_TO_ID:
+            jay_id_map[i] = CLASS_TO_ID[canonical_name]
+        else:
+            print(f"Warning: Class '{name}' (canonical: '{canonical_name}') not found in CANONICAL_CLASSES.")
+
+    data_items = []
+    
+    # Iterate over images
+    # Since there are many files, we use glob
+    for img_path in img_dir.glob("*.jpg"):
+        # Find corresponding label
+        lbl_path = lbl_dir / (img_path.stem + ".txt")
+        
+        if not lbl_path.exists():
+            continue
+            
+        with open(lbl_path, 'r') as f:
+            lines = f.readlines()
+            
+        new_lines = []
+        for line in lines:
+            parts = line.strip().split()
+            if not parts: continue
+            try:
+                cls_id = int(parts[0])
+                
+                if cls_id in jay_id_map:
+                    new_cls_id = jay_id_map[cls_id]
+                    new_lines.append(f"{new_cls_id} " + " ".join(parts[1:]))
+            except ValueError:
+                continue
+        
+        if new_lines:
+            data_items.append({
+                'src_img': img_path,
+                'labels': new_lines,
+                'dataset': 'jaypradipshah'
+            })
+            
+    return data_items
+
 def main():
     setup_directories()
     
@@ -261,6 +346,7 @@ def main():
     all_data.extend(process_hugopaigneau())
     all_data.extend(process_andy8744())
     all_data.extend(process_vdntdesai11())
+    all_data.extend(process_jaypradipshah())
     
     print(f"Total images found: {len(all_data)}")
     
