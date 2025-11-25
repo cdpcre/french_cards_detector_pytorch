@@ -1,23 +1,69 @@
 import argparse
-from ultralytics import YOLO
 import os
+from ultralytics import YOLO
 
-def train(epochs=50, imgsz=640):
+def train(args):
+    # Ensure project directory exists
+    os.makedirs(args.project, exist_ok=True)
+
     # Load a model
-    model = YOLO('yolov8n.pt')  # load a pretrained model (recommended for training)
+    print(f"Loading model: {args.model}")
+    model = YOLO(args.model)  # load a pretrained model (recommended for training)
 
     # Train the model
-    # Note: 'data.yaml' must be configured to point to your dataset
-    if os.path.exists('data.yaml'):
-        results = model.train(data='data.yaml', epochs=epochs, imgsz=imgsz)
-        print("Training completed.")
-    else:
-        print("Error: data.yaml not found. Please ensure your dataset is set up correctly.")
+    print(f"Starting training for {args.epochs} epochs...")
+    results = model.train(
+        data=args.data,
+        epochs=args.epochs,
+        imgsz=args.imgsz,
+        batch=args.batch,
+        device=args.device,
+        project=args.project,
+        name=args.name,
+        exist_ok=True, # Overwrite existing run if name is same
+        pretrained=True,
+        resume=args.resume,
+        freeze=args.freeze
+    )
+    print("Training completed.")
+
+    # Validate the model
+    print("Validating model...")
+    metrics = model.val()
+    print(f"Validation results: {metrics}")
+
+    # Export the model
+    if args.export:
+        print("Exporting model...")
+        success = model.export(format=args.export)
+        print(f"Export success: {success}")
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='Train YOLOv8 model')
+    parser = argparse.ArgumentParser(description='Train/Finetune YOLOv8 model locally')
+    
+    # Model and Data
+    parser.add_argument('--model', type=str, default='yolov8n.pt', help='Path to model weights (default: yolov8n.pt)')
+    parser.add_argument('--data', type=str, default='data.yaml', help='Path to data config (default: data.yaml)')
+    
+    # Training Hyperparameters
     parser.add_argument('--epochs', type=int, default=50, help='Number of epochs')
+    parser.add_argument('--batch', type=int, default=16, help='Batch size (default: 16, use -1 for auto)')
     parser.add_argument('--imgsz', type=int, default=640, help='Image size')
+    parser.add_argument('--device', type=str, default='', help='Device to run on, i.e. 0, 0,1,2,3 or cpu')
+    parser.add_argument('--freeze', type=int, default=None, help='Number of layers to freeze')
+    
+    # Run Configuration
+    parser.add_argument('--project', type=str, default='runs/train', help='Directory to save results')
+    parser.add_argument('--name', type=str, default='exp', help='Name of the run')
+    parser.add_argument('--resume', action='store_true', help='Resume training from last checkpoint')
+    
+    # Export
+    parser.add_argument('--export', type=str, default=None, help='Export format (e.g., onnx, torchscript) after training')
+
     args = parser.parse_args()
     
-    train(epochs=args.epochs, imgsz=args.imgsz)
+    # Handle auto batch size if user passes -1 (argparse parses as int)
+    if args.batch == -1:
+        args.batch = -1 # ultralytics treats -1 as auto
+
+    train(args)
