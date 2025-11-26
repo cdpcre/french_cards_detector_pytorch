@@ -338,106 +338,6 @@ def process_jaypradipshah():
             
     return data_items
 
-def process_playing_cards_v10i():
-    """Process Playing cards.v10i.yolov11 dataset (Dutch nomenclature)."""
-    print("Processing Playing cards.v10i.yolov11 dataset...")
-    
-    if not V10I_DIR.exists():
-        print("Playing cards.v10i.yolov11 directory not found.")
-        return []
-
-    # Mapping based on README
-    # Suits: s->s (Spades), k->c (Clubs), h->h (Hearts), r->d (Diamonds)
-    # Ranks: b->J, v->Q, h->K
-    
-    suit_map = {'s': 's', 'k': 'c', 'h': 'h', 'r': 'd'}
-    rank_map = {'b': 'J', 'v': 'Q', 'h': 'K'}
-    
-    # We need to read the data.yaml to get the class names list as defined in the dataset
-    yaml_path = V10I_DIR / "data.yaml"
-    if not yaml_path.exists():
-        print("Warning: V10I data.yaml not found.")
-        return []
-        
-    with open(yaml_path, 'r') as f:
-        data_config = yaml.safe_load(f)
-        
-    v10i_names = data_config['names']
-    
-    # Create ID map
-    id_map = {}
-    for i, name in enumerate(v10i_names):
-        if name in ['pile-face-down', 'pile-face-up']:
-            continue
-            
-        if name == 'j':
-            canonical_name = 'joker'
-        else:
-            # Format is [Suit][Rank] e.g. h10, k2, sa, hb
-            # Wait, looking at names: 'h10', 'h2', ... 'hb', 'hh', 'hv'
-            # So it is [Suit][Rank]
-            suit_char = name[0]
-            rank_char = name[1:]
-            
-            canonical_suit = suit_map.get(suit_char)
-            canonical_rank = rank_map.get(rank_char, rank_char).upper() # Ensure rank is upper (a->A)
-            
-            if not canonical_suit:
-                print(f"Warning: Unknown suit char '{suit_char}' in '{name}'")
-                continue
-                
-            canonical_name = f"{canonical_rank}{canonical_suit}"
-            
-        if canonical_name in CLASS_TO_ID:
-            id_map[i] = CLASS_TO_ID[canonical_name]
-        else:
-            print(f"Warning: Class '{name}' (canonical: '{canonical_name}') not found in canonical classes.")
-
-    data_items = []
-    
-    # Iterate over train, valid, test folders
-    # Structure: train/images, train/labels (parallel folders usually, or ../labels)
-    # The yaml says: train: ../train/images
-    
-    for split in ['train', 'valid', 'test']:
-        # The folder names in the directory are 'train', 'valid', 'test'
-        # Inside them, there are 'images' and 'labels' folders usually?
-        # Let's assume standard structure based on yaml relative paths
-        
-        split_dir = V10I_DIR / split
-        img_dir = split_dir / "images"
-        lbl_dir = split_dir / "labels"
-        
-        if not img_dir.exists():
-            continue
-            
-        for img_path in img_dir.glob("*.jpg"):
-            lbl_path = lbl_dir / (img_path.stem + ".txt")
-            
-            if not lbl_path.exists():
-                continue
-                
-            with open(lbl_path, 'r') as f:
-                lines = f.readlines()
-                
-            new_lines = []
-            for line in lines:
-                parts = line.strip().split()
-                if not parts: continue
-                cls_id = int(parts[0])
-                
-                if cls_id in id_map:
-                    new_cls_id = id_map[cls_id]
-                    new_lines.append(f"{new_cls_id} " + " ".join(parts[1:]))
-            
-            if new_lines:
-                data_items.append({
-                    'src_img': img_path,
-                    'labels': new_lines,
-                    'dataset': 'playing_cards_v10i'
-                })
-                
-    return data_items
 
 def main():
     setup_directories()
@@ -445,9 +345,7 @@ def main():
     all_data = []
     all_data.extend(process_hugopaigneau())
     all_data.extend(process_andy8744())
-    # all_data.extend(process_vdntdesai11()) # Removed due to poor quality
     all_data.extend(process_jaypradipshah())
-    all_data.extend(process_playing_cards_v10i())
     
     print(f"Total images found: {len(all_data)}")
     
