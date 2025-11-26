@@ -55,7 +55,7 @@ class YOLODataset(Dataset):
         # Cache labels
         self.labels = []
         for img_path in self.img_paths:
-            label_path = img_path.parent.parent / 'labels' / img_path.parent.name / (img_path.stem + ".txt")
+            label_path = img_path.parent.parent.parent / 'labels' / img_path.parent.name / (img_path.stem + ".txt")
             if label_path.exists():
                 with open(label_path, 'r') as f:
                     l = [x.split() for x in f.read().strip().splitlines() if len(x)]
@@ -147,6 +147,13 @@ class YOLODataset(Dataset):
             np.clip(result_bboxes[:, 2], 0, 2 * s, out=result_bboxes[:, 2])
             np.clip(result_bboxes[:, 3], 0, 2 * s, out=result_bboxes[:, 3])
             
+            # Filter degenerate boxes
+            w_box = result_bboxes[:, 2] - result_bboxes[:, 0]
+            h_box = result_bboxes[:, 3] - result_bboxes[:, 1]
+            keep = (w_box > 2) & (h_box > 2)
+            result_bboxes = result_bboxes[keep]
+            result_cls = result_cls[keep]
+            
         return result_img, result_bboxes, result_cls
 
     def __getitem__(self, index):
@@ -171,8 +178,14 @@ class YOLODataset(Dataset):
             
         bboxes = tv_tensors.BoundingBoxes(bboxes, format="XYXY", canvas_size=img.shape[-2:])
         
+        # DEBUG PRINTS
+        print(f"DEBUG: Pre-transform bboxes: {bboxes}")
+        print(f"DEBUG: Pre-transform img shape: {img.shape}")
+        
         if self.transform:
             img, bboxes, cls = self.transform(img, bboxes, cls)
+            
+        print(f"DEBUG: Post-transform bboxes: {bboxes}")
             
         # Normalize image 0-1
         img = img.float() / 255.0
@@ -215,7 +228,6 @@ def train(args):
     # Transforms
     train_transform = v2.Compose([
         v2.Resize((args.imgsz, args.imgsz)),
-        v2.RandomHorizontalFlip(p=0.5),
         v2.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.5, 1.5)),
         v2.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.7, hue=0.015),
     ])
