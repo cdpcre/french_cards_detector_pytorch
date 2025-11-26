@@ -62,7 +62,7 @@ def verify_dataset():
                     bbox = " ".join(parts[1:])
                     
                     all_classes.add(cls_id)
-                    if cls_id < 0 or cls_id > 51:
+                    if cls_id < 0 or cls_id > 52:
                         invalid_files.append((lf, cls_id))
                     
                     rows.append({
@@ -86,7 +86,7 @@ def verify_dataset():
         for f, cid in invalid_files[:5]:
             print(f"  {f}: {cid}")
     else:
-        print("All class IDs are within valid range (0-51).")
+        print("All class IDs are within valid range (0-52).")
         
     print(f"Unique classes found: {sorted(list(all_classes))}")
     print(f"CSV saved to {os.path.abspath(csv_output)}")

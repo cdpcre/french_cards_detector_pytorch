@@ -315,6 +315,8 @@ def train(args):
                     "img": imgs
                 }
                 loss, _ = loss_fn(preds, batch_data)
+                if loss.ndim > 0:
+                    loss = loss.sum()
                 val_loss += loss.item()
                 
         print(f"Val Loss: {val_loss / len(val_loader):.4f}")

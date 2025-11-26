@@ -13,12 +13,15 @@ We utilize a unified dataset composed of multiple sources:
 - **Andy8744**: [Playing Cards Object Detection Dataset](https://www.kaggle.com/datasets/andy8744/playing-cards-object-detection-dataset)
 - **HugoPaigneau**: [Playing Cards Dataset](https://www.kaggle.com/datasets/hugopaigneau/playing-cards-dataset)
 - **JayPradipShah**: [The Complete Playing Card Dataset](https://www.kaggle.com/datasets/jaypradipshah/the-complete-playing-card-dataset)
+- **Cards.v1i.yolov11**: [Cards.v1i.yolov11](https://universe.roboflow.com/juan-ic6bc/cards-bxmcj/dataset/1)
+- **Playing Cards.v2i.yolov11**: [Playing Cards.v2i.yolov11](https://universe.roboflow.com/kacem-el-amri-hslmc/playing-cards-yy60t/dataset/2)
 
 - **Classes**: 52 standard cards (Ace through King, across Spades, Hearts, Diamonds, and Clubs) + Joker.
 - **Format**: The dataset is in YOLO format (images and corresponding `.txt` label files).
 
 ## Project Structure
-- `notebook.ipynb`: Jupyter notebook for Exploratory Data Analysis (EDA) and initial model training experiments.
+- `eda.ipynb`: Jupyter notebook for Exploratory Data Analysis (EDA) of the dataset.
+- `evaluation.ipynb`: Jupyter notebook for evaluating the trained model's performance.
 - `train.py`: A standalone Python script exported from the notebook to ensure reproducible training.
 - `predict.py`: A Flask web application that serves the trained model via a REST API.
 - `Dockerfile`: Configuration file for containerizing the prediction service.

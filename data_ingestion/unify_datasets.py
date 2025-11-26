@@ -16,7 +16,8 @@ ANDY_DIR = DATASETS_DIR / "andy8744:playing-cards-object-detection-dataset"
 VDNT_ZIP = DATASETS_DIR / "vdntdesai11:playing-cards.zip"
 VDNT_DIR = DATASETS_DIR / "vdntdesai11_extracted"
 JAY_DIR = DATASETS_DIR / "jaypradipshah:the-complete-playing-card-dataset"
-V10I_DIR = DATASETS_DIR / "Playing cards.v10i.yolov11"
+CARDS_V1I_DIR = DATASETS_DIR / "Cards.v1i.yolov11"
+PLAYING_CARDS_V2I_DIR = DATASETS_DIR / "Playing Cards.v2i.yolov11"
 
 # Canonical Class List (Alphabetical order as seen in Andy8744)
 CANONICAL_CLASSES = [
@@ -339,6 +340,144 @@ def process_jaypradipshah():
     return data_items
 
 
+
+def process_cards_v1i():
+    """Process Cards.v1i.yolov11 dataset."""
+    print("Processing Cards.v1i.yolov11 dataset...")
+    
+    yaml_path = CARDS_V1I_DIR / "data.yaml"
+    if not yaml_path.exists():
+        print("Warning: Cards.v1i.yolov11 data.yaml not found.")
+        return []
+
+    with open(yaml_path, 'r') as f:
+        data_config = yaml.safe_load(f)
+    
+    src_names = data_config['names']
+    # Create mapping
+    id_map = {}
+    for i, name in enumerate(src_names):
+        # Format is RankSuit (e.g. 10C). Canonical is RankSuit_lower (e.g. 10c)
+        # Check if last char is suit
+        if len(name) >= 2:
+            rank = name[:-1]
+            suit = name[-1]
+            canonical_name = f"{rank}{suit.lower()}"
+            
+            if canonical_name in CLASS_TO_ID:
+                id_map[i] = CLASS_TO_ID[canonical_name]
+            else:
+                print(f"Warning: Class '{name}' (canonical: '{canonical_name}') not found in canonical classes.")
+        else:
+             print(f"Warning: Unexpected class name format '{name}'")
+
+    data_items = []
+    # Iterate over train, valid, test folders (if they exist)
+    for split in ['train', 'valid', 'test', 'val']:
+        img_dir = CARDS_V1I_DIR / split / "images"
+        lbl_dir = CARDS_V1I_DIR / split / "labels"
+        
+        if not img_dir.exists():
+            continue
+            
+        for img_path in img_dir.glob("*.jpg"):
+            lbl_path = lbl_dir / (img_path.stem + ".txt")
+            if not lbl_path.exists():
+                continue
+                
+            with open(lbl_path, 'r') as f:
+                lines = f.readlines()
+            
+            new_lines = []
+            for line in lines:
+                parts = line.strip().split()
+                if not parts: continue
+                try:
+                    cls_id = int(parts[0])
+                    if cls_id in id_map:
+                        new_cls_id = id_map[cls_id]
+                        new_lines.append(f"{new_cls_id} " + " ".join(parts[1:]))
+                except ValueError:
+                    continue
+            
+            if new_lines:
+                data_items.append({
+                    'src_img': img_path,
+                    'labels': new_lines,
+                    'dataset': 'cards_v1i'
+                })
+                
+    return data_items
+
+def process_playing_cards_v2i():
+    """Process Playing Cards.v2i.yolov11 dataset."""
+    print("Processing Playing Cards.v2i.yolov11 dataset...")
+    
+    yaml_path = PLAYING_CARDS_V2I_DIR / "data.yaml"
+    if not yaml_path.exists():
+        print("Warning: Playing Cards.v2i.yolov11 data.yaml not found.")
+        return []
+
+    with open(yaml_path, 'r') as f:
+        data_config = yaml.safe_load(f)
+    
+    src_names = data_config['names']
+    # Create mapping
+    id_map = {}
+    for i, name in enumerate(src_names):
+        if name == 'joker':
+            canonical_name = 'joker'
+        elif len(name) >= 2:
+            rank = name[:-1]
+            suit = name[-1]
+            canonical_name = f"{rank}{suit.lower()}"
+        else:
+            print(f"Warning: Unexpected class name format '{name}'")
+            continue
+            
+        if canonical_name in CLASS_TO_ID:
+            id_map[i] = CLASS_TO_ID[canonical_name]
+        else:
+            print(f"Warning: Class '{name}' (canonical: '{canonical_name}') not found in canonical classes.")
+
+    data_items = []
+    for split in ['train', 'valid', 'test', 'val']:
+        img_dir = PLAYING_CARDS_V2I_DIR / split / "images"
+        lbl_dir = PLAYING_CARDS_V2I_DIR / split / "labels"
+        
+        if not img_dir.exists():
+            continue
+            
+        for img_path in img_dir.glob("*.jpg"):
+            lbl_path = lbl_dir / (img_path.stem + ".txt")
+            if not lbl_path.exists():
+                continue
+                
+            with open(lbl_path, 'r') as f:
+                lines = f.readlines()
+            
+            new_lines = []
+            for line in lines:
+                parts = line.strip().split()
+                if not parts: continue
+                try:
+                    cls_id = int(parts[0])
+                    if cls_id in id_map:
+                        new_cls_id = id_map[cls_id]
+                        new_lines.append(f"{new_cls_id} " + " ".join(parts[1:]))
+                except ValueError:
+                    continue
+            
+            if new_lines:
+                data_items.append({
+                    'src_img': img_path,
+                    'labels': new_lines,
+                    'dataset': 'playing_cards_v2i'
+                })
+                
+    return data_items
+
+
 def main():
     setup_directories()
     
@@ -346,6 +485,8 @@ def main():
     all_data.extend(process_hugopaigneau())
     all_data.extend(process_andy8744())
     all_data.extend(process_jaypradipshah())
+    all_data.extend(process_cards_v1i())
+    all_data.extend(process_playing_cards_v2i())
     
     print(f"Total images found: {len(all_data)}")
     
