@@ -44,7 +44,7 @@ if __name__ == '__main__':
     
     # Model and Data
     parser.add_argument('--model', type=str, default='yolo11n.pt', help='Path to model weights (default: yolo11n.pt)')
-    parser.add_argument('--data', type=str, default='data.yaml', help='Path to data config (default: data.yaml)')
+    parser.add_argument('--data', type=str, default='datasets/unified/data.yaml', help='Path to data config (default: datasets/unified/data.yaml)')
     
     # Training Hyperparameters
     parser.add_argument('--epochs', type=int, default=50, help='Number of epochs')
