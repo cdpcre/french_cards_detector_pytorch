@@ -143,19 +143,42 @@ class YOLODataset(Dataset):
             result_bboxes = np.concatenate(result_bboxes, 0)
             result_cls = np.concatenate(result_cls, 0)
             
-            # Clip boxes to image
+            # Clip boxes to mosaic canvas (2s x 2s)
             np.clip(result_bboxes[:, 0], 0, 2 * s, out=result_bboxes[:, 0])
             np.clip(result_bboxes[:, 1], 0, 2 * s, out=result_bboxes[:, 1])
             np.clip(result_bboxes[:, 2], 0, 2 * s, out=result_bboxes[:, 2])
             np.clip(result_bboxes[:, 3], 0, 2 * s, out=result_bboxes[:, 3])
-            
-            # Filter degenerate boxes
+
+            # Filter degenerate boxes (use larger threshold for mosaic)
             w_box = result_bboxes[:, 2] - result_bboxes[:, 0]
             h_box = result_bboxes[:, 3] - result_bboxes[:, 1]
-            keep = (w_box > 2) & (h_box > 2)
+            keep = (w_box > 4) & (h_box > 4)  # Increased threshold for mosaic
             result_bboxes = result_bboxes[keep]
             result_cls = result_cls[keep]
-            
+
+        # Crop mosaic to final image size (s x s from center of 2s x 2s)
+        crop_x = s // 2
+        crop_y = s // 2
+        result_img = result_img[crop_y:crop_y+s, crop_x:crop_x+s]
+
+        # Adjust boxes for the crop
+        if len(result_bboxes) > 0:
+            result_bboxes[:, [0, 2]] -= crop_x  # subtract x offset
+            result_bboxes[:, [1, 3]] -= crop_y  # subtract y offset
+
+            # Clip boxes to final image size
+            np.clip(result_bboxes[:, 0], 0, s, out=result_bboxes[:, 0])
+            np.clip(result_bboxes[:, 1], 0, s, out=result_bboxes[:, 1])
+            np.clip(result_bboxes[:, 2], 0, s, out=result_bboxes[:, 2])
+            np.clip(result_bboxes[:, 3], 0, s, out=result_bboxes[:, 3])
+
+            # Filter boxes that are now outside or too small after crop
+            w_box = result_bboxes[:, 2] - result_bboxes[:, 0]
+            h_box = result_bboxes[:, 3] - result_bboxes[:, 1]
+            keep = (w_box > 2) & (h_box > 2) & (result_bboxes[:, 0] < s) & (result_bboxes[:, 1] < s)
+            result_bboxes = result_bboxes[keep]
+            result_cls = result_cls[keep]
+
         return result_img, result_bboxes, result_cls
 
     def apply_joker_augmentation(self, img, bboxes, cls):
