@@ -72,7 +72,7 @@ make train-fast  # 10 epochs with quick settings
 
 **Key Training Features:**
 - **Weighted Sampling**: Automatically oversamples minority classes (joker) using inverse square root weighting
-- **Joker Augmentation**: Applies 1-2 random augmentations (blur, brightness, noise, flip) to joker samples
+- **Joker Augmentation**: Applies 1-2 bbox-invariant augmentations (blur, brightness, noise) to joker samples
 - **Best Model Tracking**: Automatically saves `best.pt` when validation loss improves
 - **Enhanced Augmentation**: Rotation (±15°), shear (±10°), grayscale (10%), and mosaic combining
 

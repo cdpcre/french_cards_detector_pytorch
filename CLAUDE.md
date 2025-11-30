@@ -215,9 +215,10 @@ Enable with `--class-weighted-sampling` flag:
 ### Joker-Specific Augmentation
 Automatically applied during training to samples containing joker cards:
 - 1-2 random augmentations per joker sample
-- Techniques: Gaussian blur, brightness variation, noise injection, horizontal flip
+- Techniques: Gaussian blur, brightness variation, noise injection
 - Increases joker sample diversity
 - Applied before general augmentation pipeline
+- Uses only bbox-invariant transformations to maintain annotation accuracy
 
 ### Best Model Tracking
 Automatic during training:

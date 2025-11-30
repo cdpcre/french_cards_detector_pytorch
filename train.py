@@ -162,16 +162,15 @@ class YOLODataset(Dataset):
         if len(cls) == 0 or 52 not in cls:
             return img, bboxes, cls
 
-        # Aggressive augmentations specifically for joker
+        # Aggressive augmentations specifically for joker (bbox-invariant only)
         augmentations = [
             lambda x: cv2.GaussianBlur(x, (5, 5), 0),
             lambda x: np.clip(x * np.random.uniform(0.7, 1.3), 0, 255).astype(np.uint8),
             lambda x: np.clip(x + np.random.normal(0, 10, x.shape), 0, 255).astype(np.uint8),
-            lambda x: cv2.flip(x, 1),  # Horizontal flip
         ]
 
         # Apply 1-2 random augmentations
-        num_augs = np.random.randint(1, 3)
+        num_augs = np.random.randint(1, min(3, len(augmentations) + 1))
         selected_augs = np.random.choice(len(augmentations), num_augs, replace=False)
 
         for aug_idx in selected_augs:
