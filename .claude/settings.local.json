@@ -7,7 +7,8 @@
       "Bash(cat:*)",
       "Bash(grep:*)",
       "Bash(xargs cat:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(done)"
     ],
     "deny": [],
     "ask": []

@@ -14,6 +14,8 @@ JAY_DIR = DATASETS_DIR / "jaypradipshah:the-complete-playing-card-dataset"
 CARDS_V1I_DIR = DATASETS_DIR / "Cards.v1i.yolov11"
 PLAYING_CARDS_V2I_DIR = DATASETS_DIR / "Playing Cards.v2i.yolov11"
 ROBOFLOW_PLAYING_CARDS_DIR = DATASETS_DIR / "Playing Cards.v4-yolov8n.yolov11"
+CARD_DETECTION_V12I_DIR = DATASETS_DIR / "Card Detection.v12i.yolov11"
+CARD_READER_V1I_DIR = DATASETS_DIR / "Card Reader.v1i.yolov11"
 
 # Canonical Class List (Alphabetical order as seen in Andy8744)
 CANONICAL_CLASSES = [
@@ -475,6 +477,191 @@ def process_roboflow_playing_cards():
     return data_items
 
 
+def process_card_detection_v12i():
+    """
+    Process Card Detection.v12i.yolov11 dataset with BLACK/RED joker support.
+
+    Dataset info:
+    - Source: https://universe.roboflow.com/cadyzedevelopmenthub/card-detection-zk7wu/dataset/12
+    - Total images: 6,436
+    - Joker samples: 237 (BLACK JOKER + RED JOKER combined)
+    - License: CC BY 4.0
+    - Format: YOLO with 55 classes (52 cards + BACK + BLACK JOKER + RED JOKER)
+    """
+    print("Processing Card Detection.v12i dataset...")
+
+    yaml_path = CARD_DETECTION_V12I_DIR / "data.yaml"
+    if not yaml_path.exists():
+        print(f"Warning: {yaml_path} not found. Skipping Card Detection dataset.")
+        return []
+
+    with open(yaml_path, 'r') as f:
+        data_config = yaml.safe_load(f)
+
+    src_names = data_config['names']
+    id_map = {}
+
+    # Map classes from Card Detection to canonical
+    # BLACK JOKER (41) and RED JOKER (54) both → joker (52)
+    # BACK (40) → skip (not in canonical)
+    # Standard cards: '10C' → '10c', 'AH' → 'Ah', etc.
+    for i, name in enumerate(src_names):
+        if 'JOKER' in name.upper():
+            # Both BLACK JOKER and RED JOKER map to joker
+            id_map[i] = CLASS_TO_ID['joker']
+        elif name == 'BACK':
+            # Skip BACK class (not in canonical)
+            continue
+        elif len(name) >= 2:
+            # Standard card: convert suit to lowercase
+            rank = name[:-1]
+            suit = name[-1].lower()
+            canonical_name = f"{rank}{suit}"
+
+            if canonical_name in CLASS_TO_ID:
+                id_map[i] = CLASS_TO_ID[canonical_name]
+            else:
+                print(f"Warning: Class '{name}' (canonical: '{canonical_name}') not found in canonical classes.")
+
+    data_items = []
+    joker_count = 0
+
+    # Process all splits
+    for split in ['train', 'valid', 'test', 'val']:
+        img_dir = CARD_DETECTION_V12I_DIR / split / "images"
+        lbl_dir = CARD_DETECTION_V12I_DIR / split / "labels"
+
+        if not img_dir.exists():
+            continue
+
+        for img_path in img_dir.glob("*.jpg"):
+            lbl_path = lbl_dir / (img_path.stem + ".txt")
+            if not lbl_path.exists():
+                continue
+
+            with open(lbl_path, 'r') as f:
+                lines = f.readlines()
+
+            new_lines = []
+            for line in lines:
+                parts = line.strip().split()
+                if not parts:
+                    continue
+
+                try:
+                    cls_id = int(parts[0])
+                    if cls_id in id_map:
+                        new_cls_id = id_map[cls_id]
+                        new_lines.append(f"{new_cls_id} " + " ".join(parts[1:]))
+
+                        # Count joker annotations
+                        if new_cls_id == CLASS_TO_ID['joker']:
+                            joker_count += 1
+                except ValueError:
+                    continue
+
+            if new_lines:
+                data_items.append({
+                    'src_img': img_path,
+                    'labels': new_lines,
+                    'dataset': 'card_detection_v12i'
+                })
+
+    print(f"Processed {len(data_items)} items from Card Detection dataset ({joker_count} joker annotations)")
+    return data_items
+
+
+def process_card_reader_v1i():
+    """
+    Process Card Reader.v1i.yolov11 dataset with BLACK/RED joker support.
+
+    Dataset info:
+    - Source: https://universe.roboflow.com/test-d9qpu/card-reader-alybn/dataset/1
+    - Total images: 2,158
+    - Joker samples: 79 (BLACK JOKER + RED JOKER combined)
+    - License: CC BY 4.0
+    - Format: YOLO with 55 classes (same schema as Card Detection)
+    """
+    print("Processing Card Reader.v1i dataset...")
+
+    yaml_path = CARD_READER_V1I_DIR / "data.yaml"
+    if not yaml_path.exists():
+        print(f"Warning: {yaml_path} not found. Skipping Card Reader dataset.")
+        return []
+
+    with open(yaml_path, 'r') as f:
+        data_config = yaml.safe_load(f)
+
+    src_names = data_config['names']
+    id_map = {}
+
+    # Same mapping logic as Card Detection (same 55-class schema)
+    for i, name in enumerate(src_names):
+        if 'JOKER' in name.upper():
+            # Both BLACK JOKER and RED JOKER map to joker
+            id_map[i] = CLASS_TO_ID['joker']
+        elif name == 'BACK':
+            # Skip BACK class (not in canonical)
+            continue
+        elif len(name) >= 2:
+            # Standard card: convert suit to lowercase
+            rank = name[:-1]
+            suit = name[-1].lower()
+            canonical_name = f"{rank}{suit}"
+
+            if canonical_name in CLASS_TO_ID:
+                id_map[i] = CLASS_TO_ID[canonical_name]
+            else:
+                print(f"Warning: Class '{name}' (canonical: '{canonical_name}') not found in canonical classes.")
+
+    data_items = []
+    joker_count = 0
+
+    # Process all splits
+    for split in ['train', 'valid', 'test', 'val']:
+        img_dir = CARD_READER_V1I_DIR / split / "images"
+        lbl_dir = CARD_READER_V1I_DIR / split / "labels"
+
+        if not img_dir.exists():
+            continue
+
+        for img_path in img_dir.glob("*.jpg"):
+            lbl_path = lbl_dir / (img_path.stem + ".txt")
+            if not lbl_path.exists():
+                continue
+
+            with open(lbl_path, 'r') as f:
+                lines = f.readlines()
+
+            new_lines = []
+            for line in lines:
+                parts = line.strip().split()
+                if not parts:
+                    continue
+
+                try:
+                    cls_id = int(parts[0])
+                    if cls_id in id_map:
+                        new_cls_id = id_map[cls_id]
+                        new_lines.append(f"{new_cls_id} " + " ".join(parts[1:]))
+
+                        # Count joker annotations
+                        if new_cls_id == CLASS_TO_ID['joker']:
+                            joker_count += 1
+                except ValueError:
+                    continue
+
+            if new_lines:
+                data_items.append({
+                    'src_img': img_path,
+                    'labels': new_lines,
+                    'dataset': 'card_reader_v1i'
+                })
+
+    print(f"Processed {len(data_items)} items from Card Reader dataset ({joker_count} joker annotations)")
+    return data_items
+
+
 def main():
     setup_directories()
 
@@ -484,9 +671,13 @@ def main():
     all_data.extend(process_jaypradipshah())
     all_data.extend(process_cards_v1i())
     all_data.extend(process_playing_cards_v2i())
-    all_data.extend(process_roboflow_playing_cards())  # New dataset with joker oversampling
+    all_data.extend(process_roboflow_playing_cards())  # With joker oversampling
 
-    print(f"Total images found: {len(all_data)}")
+    # NEW: Process additional joker datasets
+    all_data.extend(process_card_detection_v12i())  # 237 joker annotations
+    all_data.extend(process_card_reader_v1i())  # 79 joker annotations
+
+    print(f"\nTotal images found: {len(all_data)}")
     
     # Split data
     train_data, test_val_data = train_test_split(all_data, test_size=0.2, random_state=42)
