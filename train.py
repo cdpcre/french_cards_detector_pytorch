@@ -214,6 +214,39 @@ class YOLODataset(Dataset):
             
         return imgs, targets
 
+
+def create_weighted_sampler(dataset):
+    """Create sampler that oversamples minority classes (especially joker)."""
+    from torch.utils.data.sampler import WeightedRandomSampler
+
+    class_counts = {}
+
+    # Count samples per class
+    for idx in range(len(dataset)):
+        label = dataset.labels[idx]
+        if len(label) > 0:
+            cls_id = int(label[0, 0])
+            class_counts[cls_id] = class_counts.get(cls_id, 0) + 1
+
+    # Calculate weights per sample (inversely proportional to frequency)
+    sample_weights = []
+    for idx in range(len(dataset)):
+        label = dataset.labels[idx]
+        if len(label) > 0:
+            cls_id = int(label[0, 0])
+            # Use square root to balance without oversampling too much
+            weight = 1.0 / (class_counts[cls_id] ** 0.5)
+        else:
+            weight = 1.0
+        sample_weights.append(weight)
+
+    return WeightedRandomSampler(
+        weights=sample_weights,
+        num_samples=len(dataset),
+        replacement=True
+    )
+
+
 def train(args):
     # Device
     device = torch.device(args.device if torch.cuda.is_available() or torch.backends.mps.is_available() else "cpu")
@@ -234,11 +267,19 @@ def train(args):
     train_dataset = YOLODataset(args.data, split='train', img_size=args.imgsz, transform=train_transform, mosaic_prob=args.mosaic)
     val_dataset = YOLODataset(args.data, split='val', img_size=args.imgsz, transform=val_transform, mosaic_prob=0.0)
 
-    train_loader = DataLoader(train_dataset, batch_size=args.batch, shuffle=True, collate_fn=train_dataset.collate_fn, num_workers=args.workers)
+    # Weighted sampling for class imbalance
+    if args.class_weighted_sampling:
+        print("Creating weighted sampler for class imbalance...")
+        train_sampler = create_weighted_sampler(train_dataset)
+        train_loader = DataLoader(train_dataset, batch_size=args.batch, sampler=train_sampler, collate_fn=train_dataset.collate_fn, num_workers=args.workers)
+    else:
+        train_loader = DataLoader(train_dataset, batch_size=args.batch, shuffle=True, collate_fn=train_dataset.collate_fn, num_workers=args.workers)
+
     val_loader = DataLoader(val_dataset, batch_size=args.batch, shuffle=False, collate_fn=val_dataset.collate_fn, num_workers=args.workers)
 
     print(f"Train images: {len(train_dataset)}")
     print(f"Val images: {len(val_dataset)}")
+    print(f"Weighted sampling: {'ENABLED' if args.class_weighted_sampling else 'disabled'}")
     
     # Model
     print(f"Loading model: {args.model}")
@@ -268,7 +309,8 @@ def train(args):
     
     # Training Loop
     os.makedirs(args.project, exist_ok=True)
-    
+    best_val_loss = float('inf')
+
     for epoch in range(args.epochs):
         model.train()
         pbar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{args.epochs}")
@@ -324,13 +366,22 @@ def train(args):
                 if loss.ndim > 0:
                     loss = loss.sum()
                 val_loss += loss.item()
-                
-        print(f"Val Loss: {val_loss / len(val_loader):.4f}")
-        
+
+        avg_val_loss = val_loss / len(val_loader)
+        print(f"Val Loss: {avg_val_loss:.4f}")
+
         # Save checkpoint
         torch.save(model.state_dict(), f"{args.project}/custom_yolo_epoch_{epoch+1}.pt")
-        
-    return val_loss / len(val_loader)
+
+        # Save best model
+        if avg_val_loss < best_val_loss:
+            best_val_loss = avg_val_loss
+            best_path = f"{args.project}/best.pt"
+            torch.save(model.state_dict(), best_path)
+            print(f"✓ New best model saved: {best_path} (val_loss: {best_val_loss:.4f})")
+
+    print(f"\nTraining complete! Best validation loss: {best_val_loss:.4f}")
+    return best_val_loss
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train YOLOv11 with custom PyTorch loop')
