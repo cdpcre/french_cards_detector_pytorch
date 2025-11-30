@@ -58,8 +58,10 @@ class YOLODataset(Dataset):
             label_path = img_path.parent.parent.parent / 'labels' / img_path.parent.name / (img_path.stem + ".txt")
             if label_path.exists():
                 with open(label_path, 'r') as f:
-                    l = [x.split() for x in f.read().strip().splitlines() if len(x)]
-                    l = np.array(l, dtype=np.float32) if len(l) else np.zeros((0, 5), dtype=np.float32)
+                    lines = [x.strip().split() for x in f.read().strip().splitlines() if len(x.strip())]
+                    # Filter for lines that have exactly 5 elements (class_id + 4 bbox coords)
+                    valid_lines = [line for line in lines if len(line) == 5]
+                    l = np.array(valid_lines, dtype=np.float32) if len(valid_lines) else np.zeros((0, 5), dtype=np.float32)
                 self.labels.append(l)
             else:
                 self.labels.append(np.zeros((0, 5), dtype=np.float32))
