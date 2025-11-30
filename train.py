@@ -156,12 +156,39 @@ class YOLODataset(Dataset):
             
         return result_img, result_bboxes, result_cls
 
+    def apply_joker_augmentation(self, img, bboxes, cls):
+        """Apply aggressive augmentation to samples with joker cards."""
+        # Check if there are joker cards in the image (class 52)
+        if len(cls) == 0 or 52 not in cls:
+            return img, bboxes, cls
+
+        # Aggressive augmentations specifically for joker
+        augmentations = [
+            lambda x: cv2.GaussianBlur(x, (5, 5), 0),
+            lambda x: np.clip(x * np.random.uniform(0.7, 1.3), 0, 255).astype(np.uint8),
+            lambda x: np.clip(x + np.random.normal(0, 10, x.shape), 0, 255).astype(np.uint8),
+            lambda x: cv2.flip(x, 1),  # Horizontal flip
+        ]
+
+        # Apply 1-2 random augmentations
+        num_augs = np.random.randint(1, 3)
+        selected_augs = np.random.choice(len(augmentations), num_augs, replace=False)
+
+        for aug_idx in selected_augs:
+            img = augmentations[aug_idx](img)
+
+        return img, bboxes, cls
+
     def __getitem__(self, index):
         if self.split == 'train' and np.random.rand() < self.mosaic_prob:
             img, bboxes, cls = self.load_mosaic(index)
         else:
             img, bboxes, cls = self.load_image_and_label(index)
-            
+
+        # Apply joker-specific augmentation (only for training)
+        if self.split == 'train':
+            img, bboxes, cls = self.apply_joker_augmentation(img, bboxes, cls)
+
         # Prepare for transforms
         # Convert to torch tensors
         # Ensure CHW format
@@ -252,11 +279,22 @@ def train(args):
     device = torch.device(args.device if torch.cuda.is_available() or torch.backends.mps.is_available() else "cpu")
     print(f"Using device: {device}")
     
-    # Transforms
+    # Transforms (enhanced augmentation)
     train_transform = v2.Compose([
         v2.Resize((args.imgsz, args.imgsz)),
-        v2.RandomAffine(degrees=0, translate=(0.1, 0.1), scale=(0.5, 1.5)),
-        v2.ColorJitter(brightness=0.4, contrast=0.4, saturation=0.7, hue=0.015),
+        v2.RandomAffine(
+            degrees=15,           # Rotation ±15°
+            translate=(0.1, 0.1), # Translation 10%
+            scale=(0.5, 1.5),     # Scale 50%-150%
+            shear=10              # Shear ±10°
+        ),
+        v2.ColorJitter(
+            brightness=0.5,
+            contrast=0.5,
+            saturation=0.7,
+            hue=0.015
+        ),
+        v2.RandomGrayscale(p=0.1),  # 10% chance grayscale
     ])
 
     val_transform = v2.Compose([
