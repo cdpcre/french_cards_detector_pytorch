@@ -14,12 +14,12 @@ def run_step(command, step_name):
         sys.exit(1)
 
 def main():
-    parser = argparse.ArgumentParser(description="End-to-End YOLOv8 Training Pipeline")
+    parser = argparse.ArgumentParser(description="End-to-End YOLOv11 Training Pipeline")
     parser.add_argument('--skip-ingestion', action='store_true', help="Skip data ingestion step")
     parser.add_argument('--skip-verification', action='store_true', help="Skip data verification step")
     parser.add_argument('--epochs', type=int, default=50, help="Number of training epochs")
     parser.add_argument('--batch', type=int, default=16, help="Batch size")
-    parser.add_argument('--model', type=str, default='yolov8n.pt', help="Base model")
+    parser.add_argument('--model', type=str, default='yolo11n.pt', help="Base model")
     
     args = parser.parse_args()
 
@@ -50,9 +50,11 @@ def main():
         f"--epochs {args.epochs} "
         f"--batch {args.batch} "
         f"--model {args.model} "
-        f"--name pipeline_run "
         f"--project runs/train "
-        f"--data data.yaml" # Assuming data.yaml in root points to unified dataset
+        f"--data datasets/unified/data.yaml "
+        f"--lr 5e-4 "
+        f"--mosaic 1.0 "
+        f"--workers 0"
     )
     run_step(train_cmd, "Training")
 

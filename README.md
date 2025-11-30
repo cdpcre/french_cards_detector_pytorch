@@ -1,7 +1,7 @@
 # French Cards Detector - Object Detection Project
 
 ## Problem Description
-This project addresses the challenge of detecting and classifying playing cards in images. Leveraging computer vision and deep learning techniques—specifically the YOLOv8 object detection model—we aim to identify both the rank and suit of standard French playing cards (e.g., "Ace of Spades", "10 of Hearts") within a given image.
+This project addresses the challenge of detecting and classifying playing cards in images. Leveraging computer vision and deep learning techniques—specifically the YOLOv11 object detection model—we aim to identify both the rank and suit of standard French playing cards (e.g., "Ace of Spades", "10 of Hearts") within a given image.
 
 Potential applications include:
 - **Automated Card Game Analysis**: Tracking game states in real-time.
@@ -22,7 +22,7 @@ We utilize a unified dataset composed of multiple sources:
 ## Project Structure
 - `eda.ipynb`: Jupyter notebook for Exploratory Data Analysis (EDA) of the dataset.
 - `evaluation.ipynb`: Jupyter notebook for evaluating the trained model's performance.
-- `train.py`: A standalone Python script exported from the notebook to ensure reproducible training.
+- `train.py`: Custom PyTorch training script with full control over the training loop, data loading, and augmentations.
 - `predict.py`: A Flask web application that serves the trained model via a REST API.
 - `Dockerfile`: Configuration file for containerizing the prediction service.
 - `requirements.txt`: List of all Python dependencies required for the project.
@@ -51,7 +51,17 @@ To train the model locally, execute the following command:
 ```bash
 python train.py
 ```
-*Note: This script will download the pre-trained `yolov8n.pt` model and fine-tune it on your dataset. Ensure your `data.yaml` is correctly configured.*
+*Note: This script will download the pre-trained `yolo11n.pt` model and fine-tune it on your dataset. Ensure your `data.yaml` is correctly configured.*
+
+You can customize training with various parameters:
+```bash
+python train.py --epochs 50 --batch 16 --lr 5e-4 --mosaic 1.0
+```
+
+For faster experimentation:
+```bash
+make train-fast  # 10 epochs with quick settings
+```
 
 ### Running the Prediction Service
 To start the Flask API locally:
