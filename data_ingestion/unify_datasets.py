@@ -13,12 +13,10 @@ DATASETS_DIR = BASE_DIR / "datasets"
 UNIFIED_DIR = DATASETS_DIR / "unified"
 HUGO_DIR = DATASETS_DIR / "hugopaigneau:playing-cards-dataset"
 ANDY_DIR = DATASETS_DIR / "andy8744:playing-cards-object-detection-dataset"
-VDNT_ZIP = DATASETS_DIR / "vdntdesai11:playing-cards.zip"
-VDNT_DIR = DATASETS_DIR / "vdntdesai11_extracted"
 JAY_DIR = DATASETS_DIR / "jaypradipshah:the-complete-playing-card-dataset"
 CARDS_V1I_DIR = DATASETS_DIR / "Cards.v1i.yolov11"
 PLAYING_CARDS_V2I_DIR = DATASETS_DIR / "Playing Cards.v2i.yolov11"
-ROBOFLOW_PLAYING_CARDS_DIR = DATASETS_DIR / "roboflow_playing_cards_v4"
+ROBOFLOW_PLAYING_CARDS_DIR = DATASETS_DIR / "Playing Cards.v4-yolov8n.yolov11"
 
 # Canonical Class List (Alphabetical order as seen in Andy8744)
 CANONICAL_CLASSES = [
@@ -168,94 +166,6 @@ def process_andy8744():
             })
             
     return data_items
-
-# def process_vdntdesai11():
-#     """Process vdntdesai11 dataset (Unzip and Map)."""
-#     print("Processing vdntdesai11 dataset...")
-#     
-#     if not VDNT_ZIP.exists():
-#         print("vdntdesai11 zip not found.")
-#         return []
-#         
-#     if not VDNT_DIR.exists():
-#         print("Unzipping vdntdesai11...")
-#         with zipfile.ZipFile(VDNT_ZIP, 'r') as zip_ref:
-#             zip_ref.extractall(VDNT_DIR)
-#     
-#     # User-provided class list for vdntdesai11
-#     # class names dictionary
-#     ref_class_names = [
-#         'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'CA', 'CJ', 'CK', 'CQ', 'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10', 'DA', 'DJ', 'DK', 'DQ', 'H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'H10', 'HA', 'HJ', 'HK', 'HQ', 'SA', 'S2', 'S3', 'S4', 'S5', 
-#                'S6', 'S7', 'S8', 'S9', 'S10', 'SJ', 'SK', 'SQ']
-#     
-#     # Note: 'background' at index 0, and specific ordering (e.g. K before Q usually, Spades different)
-#     vdnt_classes = [
-#         'C2', 'C3', 'C4', 'C5', 'C6', 'C7', 'C8', 'C9', 'C10', 'CA', 'CJ', 'CK', 'CQ', 
-#         'D2', 'D3', 'D4', 'D5', 'D6', 'D7', 'D8', 'D9', 'D10', 'DA', 'DJ', 'DK', 'DQ', 
-#         'H2', 'H3', 'H4', 'H5', 'H6', 'H7', 'H8', 'H9', 'H10', 'HA', 'HJ', 'HK', 'HQ', 
-#         'S2', 'S3', 'S4', 'S5', 'S6', 'S7', 'S8', 'S9', 'S10', 'SA', 'SJ', 'SK', 'SQ'
-#     ]
-#             
-#     print("Using user-provided class list for vdntdesai11.")
-# 
-#     # Map IDs
-#     id_map = {}
-#     for i, name in enumerate(vdnt_classes):
-#             
-#         # Format is [Suit][Rank] (e.g., C2, H10, SA)
-#         suit_char = name[0]
-#         rank_str = name[1:]
-#         
-#         # Canonical format is [Rank][Suit_lower] (e.g., 2c, 10h, As)
-#         canonical_name = f"{rank_str}{suit_char.lower()}"
-#         
-#         if canonical_name in CLASS_TO_ID:
-#             id_map[i] = CLASS_TO_ID[canonical_name]
-#         else:
-#             print(f"Warning: Class '{name}' (canonical: '{canonical_name}') not found in canonical classes.")
-#             
-#     data_items = []
-#     # Assume standard YOLO structure inside extracted folder
-#     # We'll search recursively for images
-#     for img_path in VDNT_DIR.rglob("*.jpg"):
-#         # Find corresponding label
-#         # Assuming label is in a 'labels' folder parallel to 'images' or same folder
-#         # Strategy: look for .txt with same stem
-#         
-#         # Check if it's in an 'images' folder
-#         if 'images' in img_path.parts:
-#             # Try replacing 'images' with 'labels'
-#             parts = list(img_path.parts)
-#             idx = parts.index('images')
-#             parts[idx] = 'labels'
-#             lbl_path = Path(*parts).with_suffix('.txt')
-#         else:
-#             lbl_path = img_path.with_suffix('.txt')
-#             
-#         if not lbl_path.exists():
-#             continue
-#             
-#         with open(lbl_path, 'r') as f:
-#             lines = f.readlines()
-#             
-#         new_lines = []
-#         for line in lines:
-#             parts = line.strip().split()
-#             if not parts: continue
-#             cls_id = int(parts[0])
-#             
-#             if cls_id in id_map:
-#                 new_cls_id = id_map[cls_id]
-#                 new_lines.append(f"{new_cls_id} " + " ".join(parts[1:]))
-#         
-#         if new_lines:
-#             data_items.append({
-#                 'src_img': img_path,
-#                 'labels': new_lines,
-#                 'dataset': 'vdntdesai11'
-#             })
-# 
-#     return data_items
 
 
 def process_jaypradipshah():
