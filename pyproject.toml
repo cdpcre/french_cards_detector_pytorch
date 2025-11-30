@@ -1,0 +1,59 @@
+[project]
+name = "french-cards-detector"
+version = "0.1.0"
+description = "French playing cards object detection using YOLOv11"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [
+    { name = "Crescenzo De Palma" }
+]
+
+dependencies = [
+    # Core ML/CV dependencies
+    "torch>=2.9",
+    "torchvision>=0.24",
+    "ultralytics>=8.3",
+    "opencv-python>=4.11",
+    "opencv-python-headless>=4.11",  # Compatible with numpy 2.x
+    "pillow>=12.0",
+    "numpy>=2.0,<3.0",  # Flexible range for compatibility
+
+    # Data processing
+    "pandas>=2.2",
+    "polars>=1.30",
+    "pyyaml>=6.0",
+    "scipy>=1.14",
+
+    # Web framework (for inference API)
+    "flask>=3.0",
+    "gunicorn>=23.0",
+
+    # Utilities
+    "tqdm>=4.60",
+    "requests>=2.32",
+]
+
+[project.optional-dependencies]
+dev = [
+    # Jupyter ecosystem
+    "jupyter>=1.1",
+    "jupyterlab>=4.5",
+    "ipython>=9.0",
+    "ipykernel>=7.0",
+    "ipywidgets>=8.1",
+    "notebook>=7.0",
+
+    # Visualization
+    "matplotlib>=3.9",
+    "seaborn>=0.13",
+
+    # Development tools
+    "pytest>=8.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["."]

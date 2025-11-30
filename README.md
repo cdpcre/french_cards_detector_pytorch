@@ -25,13 +25,15 @@ We utilize a unified dataset composed of multiple sources:
 - `train.py`: Custom PyTorch training script with full control over the training loop, data loading, and augmentations.
 - `predict.py`: A Flask web application that serves the trained model via a REST API.
 - `Dockerfile`: Configuration file for containerizing the prediction service.
-- `requirements.txt`: List of all Python dependencies required for the project.
+- `pyproject.toml`: Modern Python project configuration with dependencies (used by `uv`).
+- `requirements.txt`: Legacy dependency list (for pip compatibility).
 - `Makefile`: A collection of helper commands for setup, training, and execution.
 
 ## Setup and Installation
 
 ### Prerequisites
-- **Python 3.9+**
+- **Python 3.12+**
+- **uv** ([Installation guide](https://docs.astral.sh/uv/getting-started/installation/))
 - **Docker** (optional, recommended for containerization)
 
 ### Local Setup
@@ -41,7 +43,16 @@ We utilize a unified dataset composed of multiple sources:
    cd french_cards_detector_pytorch
    ```
 
-2. **Install dependencies**:
+2. **Install dependencies with uv** (recommended):
+   ```bash
+   # Install core dependencies
+   uv sync
+
+   # Or install with development dependencies (Jupyter, matplotlib, etc.)
+   uv sync --extra dev
+   ```
+
+   **Alternative (legacy)**: If you prefer pip:
    ```bash
    pip install -r requirements.txt
    ```

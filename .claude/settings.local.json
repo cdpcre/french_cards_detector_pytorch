@@ -8,7 +8,9 @@
       "Bash(grep:*)",
       "Bash(xargs cat:*)",
       "Bash(git checkout:*)",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(uv sync:*)",
+      "Bash(.venv/bin/python:*)"
     ],
     "deny": [],
     "ask": []

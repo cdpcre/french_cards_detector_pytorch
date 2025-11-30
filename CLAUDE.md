@@ -10,7 +10,14 @@ This is a French playing cards object detection project using YOLOv11. The syste
 
 ### Setup
 ```bash
-pip install -r requirements.txt
+# Install dependencies with uv (recommended)
+uv sync
+
+# Or install with dev dependencies
+uv sync --extra dev
+
+# Legacy: pip install (not recommended)
+# pip install -r requirements.txt
 ```
 
 ### Data Pipeline
@@ -235,6 +242,40 @@ Automatic during training:
 - **Degenerate Bboxes**: Automatically filtered in mosaic augmentation (< 2px width/height)
 - **Path Resolution**: Both absolute and relative paths supported in YAML configs
 - **Best Model**: Always use `runs/train/best.pt` for deployment, not last epoch
+
+## UV Dependency Management
+
+This project uses `uv` for fast, reliable dependency management.
+
+**Common Commands**:
+```bash
+# Install/sync all dependencies
+uv sync
+
+# Install with dev dependencies (Jupyter, matplotlib, etc.)
+uv sync --extra dev
+
+# Add a new dependency
+uv add <package-name>
+
+# Add a dev dependency
+uv add --dev <package-name>
+
+# Run a command in the virtual environment
+uv run python train.py
+
+# Update all dependencies
+uv sync --upgrade
+
+# Remove a dependency
+uv remove <package-name>
+```
+
+**Key Files**:
+- `.python-version`: Specifies Python version (3.12)
+- `pyproject.toml`: Project metadata and dependencies
+- `uv.lock`: Lockfile for reproducible builds (commit to git)
+- `.venv/`: Virtual environment (auto-created by uv)
 
 ## Notebooks
 

@@ -26,3 +26,4 @@ datasets/*
 runs/
 .DS_Store
 
+.claude/*
