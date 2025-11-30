@@ -1,11 +1,8 @@
-import os
 import shutil
 import pandas as pd
 import yaml
-import glob
 from pathlib import Path
 from sklearn.model_selection import train_test_split
-import zipfile
 
 # Configuration
 BASE_DIR = Path(__file__).parent.parent
@@ -77,10 +74,12 @@ def process_hugopaigneau():
     data_items = []
 
     for filename, group in grouped:
-        src_img_path = HUGO_DIR / "train" / filename
+        # Ensure filename is a str before joining with Path to avoid TypeError
+        filename_str = str(filename)
+        src_img_path = HUGO_DIR / "train" / filename_str
         if not src_img_path.exists():
             # Try 'test' folder if not in 'train'
-            src_img_path = HUGO_DIR / "test" / filename
+            src_img_path = HUGO_DIR / "test" / filename_str
         
         if not src_img_path.exists():
             continue
@@ -152,7 +151,8 @@ def process_andy8744():
             new_lines = []
             for line in lines:
                 parts = line.strip().split()
-                if not parts: continue
+                if not parts:
+                    continue
                 cls_id = int(parts[0])
                 
                 if cls_id in andy_id_map:
@@ -231,7 +231,8 @@ def process_jaypradipshah():
         new_lines = []
         for line in lines:
             parts = line.strip().split()
-            if not parts: continue
+            if not parts:
+                continue
             try:
                 cls_id = int(parts[0])
                 
@@ -302,7 +303,8 @@ def process_cards_v1i():
             new_lines = []
             for line in lines:
                 parts = line.strip().split()
-                if not parts: continue
+                if not parts:
+                    continue
                 try:
                     cls_id = int(parts[0])
                     if cls_id in id_map:
@@ -370,7 +372,8 @@ def process_playing_cards_v2i():
             new_lines = []
             for line in lines:
                 parts = line.strip().split()
-                if not parts: continue
+                if not parts:
+                    continue
                 try:
                     cls_id = int(parts[0])
                     if cls_id in id_map:
