@@ -186,10 +186,11 @@ datasets/unified/
 5. Re-run data ingestion
 
 **Debugging Training**:
-1. Use `train_custom.py` for full visibility
-2. Check `YOLODataset.__getitem__()` debug prints
-3. Visualize augmentations in `visualize_augmentations.ipynb`
-4. Verify data with `verify_ingestion.py`
+1. `train.py` provides full visibility into training loop
+2. Visualize augmentations in `visualize_augmentations.ipynb`
+3. Verify data with `verify_ingestion.py`
+4. Check class distribution in `dataset_details.csv`
+5. Monitor best model saves for validation loss trends
 
 **Hyperparameter Tuning**:
 1. Use `tuning.ipynb` for experiments
@@ -202,14 +203,37 @@ datasets/unified/
 3. Load best weights from `runs/train/<name>/weights/best.pt`
 4. Run evaluation on test set
 
+## Advanced Training Features
+
+### Weighted Sampling for Class Imbalance
+Enable with `--class-weighted-sampling` flag:
+- Uses inverse square root weighting to oversample minority classes
+- Especially effective for joker class (severe imbalance 1:32.5)
+- Balances training without excessive oversampling
+- Automatically computes weights from training dataset
+
+### Joker-Specific Augmentation
+Automatically applied during training to samples containing joker cards:
+- 1-2 random augmentations per joker sample
+- Techniques: Gaussian blur, brightness variation, noise injection, horizontal flip
+- Increases joker sample diversity
+- Applied before general augmentation pipeline
+
+### Best Model Tracking
+Automatic during training:
+- Saves `best.pt` when validation loss improves
+- Tracks best_val_loss across all epochs
+- Final summary shows best validation loss achieved
+- Use `best.pt` for inference/deployment
+
 ## Important Notes
 
 - **Device Selection**: Use `--device mps` on Mac, `cuda` on GPU, `cpu` as fallback
-- **Batch Size Auto**: Pass `--batch -1` for automatic batch size detection
-- **Mosaic Augmentation**: Disabled by default in `train_custom.py` (use `--mosaic 0.5` to enable)
+- **Weighted Sampling**: Highly recommended for joker class (`--class-weighted-sampling`)
+- **Mosaic Augmentation**: Enabled by default (mosaic=1.0), critical for YOLO performance
 - **Degenerate Bboxes**: Automatically filtered in mosaic augmentation (< 2px width/height)
 - **Path Resolution**: Both absolute and relative paths supported in YAML configs
-- **Model Checkpoints**: Resume training with `--resume` flag in `train.py`
+- **Best Model**: Always use `runs/train/best.pt` for deployment, not last epoch
 
 ## Notebooks
 

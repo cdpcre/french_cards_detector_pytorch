@@ -58,10 +58,23 @@ You can customize training with various parameters:
 python train.py --epochs 50 --batch 16 --lr 5e-4 --mosaic 1.0
 ```
 
+**Advanced Features:**
+
+Enable weighted sampling for class imbalance (recommended for joker class):
+```bash
+python train.py --class-weighted-sampling --epochs 50
+```
+
 For faster experimentation:
 ```bash
 make train-fast  # 10 epochs with quick settings
 ```
+
+**Key Training Features:**
+- **Weighted Sampling**: Automatically oversamples minority classes (joker) using inverse square root weighting
+- **Joker Augmentation**: Applies 1-2 random augmentations (blur, brightness, noise, flip) to joker samples
+- **Best Model Tracking**: Automatically saves `best.pt` when validation loss improves
+- **Enhanced Augmentation**: Rotation (±15°), shear (±10°), grayscale (10%), and mosaic combining
 
 ### Running the Prediction Service
 To start the Flask API locally:
