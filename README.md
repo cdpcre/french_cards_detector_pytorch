@@ -213,6 +213,11 @@ This will start the service on port 9696 and mount the `models/` directory.
 
 **Option 3: Docker Run Manual**
 ```bash
+docker run -p 9696:9696 -v $(pwd)/models:/app/models cards-detector
+```
+
+---
+
 ## Deployment Options
 
 This project offers multiple ways to deploy the inference service, ranging from free cloud demos to production-ready containers.
