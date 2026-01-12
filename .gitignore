@@ -1,0 +1,35 @@
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Project specific
+datasets/dataset_details.csv
+datasets/unified/
+datasets/*
+runs/
+.DS_Store
+
+.claude/
+models/
+
+.agent/*
+.claude/
+test_runs/
+yolo11n.pt
